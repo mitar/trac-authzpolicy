@@ -14,9 +14,6 @@
 #
 # Author: Alec Thomas <alec@swapoff.org>
 
-revision = "$Rev$"
-url = "$URL$"
-
 """Permission policy enforcement through an authz-like configuration file.
 
 Refer to SVN documentation for syntax of the authz file. Groups are supported.
@@ -129,6 +126,7 @@ from configobj import ConfigObj
 
 
 class AuthzPolicy(Component):
+    """Permission policy enforcement through an authz-like configuration file"""
 
     implements(IPermissionPolicy)
 
@@ -207,6 +205,16 @@ class AuthzPolicy(Component):
         valid_users = ['*', 'anonymous']
         if username and username != 'anonymous':
             valid_users += ['authenticated', username]
+            # FIXME: And now add other groups the ugly way
+            perms = PermissionSystem(self.env).get_all_permissions()
+            found_new = True
+            while found_new:
+                found_new = False
+                for subject, action in perms:
+                    if subject in valid_users and action.islower() and action not in valid_users:
+                        valid_users += [action]
+                        found_new = True
+        self.log.debug('Valid users and groups for %s: %s', username, ','.join(valid_users))
         for resource_section in [a for a in self.authz.sections
                                  if a != 'groups']:
             resource_glob = resource_section
