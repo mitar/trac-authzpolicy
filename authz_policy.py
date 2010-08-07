@@ -126,7 +126,7 @@ from configobj import ConfigObj
 
 
 class AuthzPolicy(Component):
-    """Permission policy enforcement through an authz-like configuration file"""
+    """Permission policy enforcement through an authz-like configuration file."""
 
     implements(IPermissionPolicy)
 
