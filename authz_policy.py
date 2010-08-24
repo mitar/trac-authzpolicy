@@ -202,17 +202,18 @@ class AuthzPolicy(Component):
     def authz_permissions(self, resource_key, username):
         # TODO: Handle permission negation in sections. eg. "if in this
         # ticket, remove TICKET_MODIFY"
-        valid_users = ['*', 'anonymous']
+        valid_users = set(['*', 'anonymous'])
         if username and username != 'anonymous':
-            valid_users += ['authenticated', username]
-            # FIXME: And now add other groups the ugly way
+            valid_users.add(username)
+            for provider in PermissionSystem(self.env).store.group_providers:
+                valid_users.update(provider.get_permission_groups(username))
             perms = PermissionSystem(self.env).get_all_permissions()
             found_new = True
             while found_new:
                 found_new = False
                 for subject, action in perms:
                     if subject in valid_users and action.islower() and action not in valid_users:
-                        valid_users += [action]
+                        valid_users.add(action)
                         found_new = True
         self.log.debug('Valid users and groups for %s: %s', username, ','.join(valid_users))
         for resource_section in [a for a in self.authz.sections
